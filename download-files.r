@@ -5,7 +5,7 @@ for (fi in data$urls[1:2]){
   filename <-basename(fi)
   print(filename)
   tryCatch(
-    download.file(url = paste(fi,"k"), destfile = file.path("10min",filename)),
+    download.file(url = fi, destfile = file.path("10min",filename)),
     error = function(e){warning(paste(fi, "failed"))}
     )
 }
