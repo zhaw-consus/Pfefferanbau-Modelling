@@ -3,7 +3,7 @@
 library(rvest)
 library(tidyverse)
 
-page <- read_html("https://worldclim.org/data/cmip6/cmip6_clim30s.html")
+page <- read_html("https://www.worldclim.org/data/cmip6/cmip6_clim10m.html")
 
 myurls <- page %>% 
   html_elements("a") %>% 
