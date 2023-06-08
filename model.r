@@ -1,7 +1,7 @@
 library(terra)
 library(tidyverse)
 library(httpgd)
-library(tmap)
+# library(tmap)
 library(tictoc)
 library(glue)
 # httpgd::hgd()

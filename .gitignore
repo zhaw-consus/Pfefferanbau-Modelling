@@ -4,3 +4,4 @@ Slurm-[0-9]*
 data-modelled
 data-raw
 .RData
+data-chelsa/*
