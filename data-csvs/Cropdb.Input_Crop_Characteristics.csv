@@ -8,7 +8,7 @@ Crop,Characteristic,S1 Top Range,S1 Top Value,S1 Bottom Range,S1 Bottom Value,S2
 "blackpepper","annual precipitation","gleich","3'000.00","gleich","2'000.00","gleich","4'000.00","grösser","3'000.00","gleich","5'500.00","grösser","4'000.00","gleich","999'999.00","grösser","5'500.00"
 "blackpepper","mean annual temperature","gleich","32.00","gleich","23.00","gleich","34.00","grösser","32.00","gleich","35.00","grösser","34.00","gleich","999'999.00","grösser","35.00"
 "blackpepper","mean annual temperature","","","","","kleiner","23.00","gleich","20.00","kleiner","20.00","gleich","15.00","kleiner","15.00","gleich","-999'999.00"
-"blackpepper","length of dry season","gleich","2.00","gleich","0.00","gleich","3.00","grösser","2.00","gleich","4.00","grösser","3.00","gleich","12.00","grösser","4.00"
+"blackpepper","length of dry season","gleich","2.00","gleich","0.00","gleich","4.00","grösser","2.00","gleich","5.00","grösser","4.00","gleich","12.00","grösser","5.00"
 "blackpepper","annual precipitation","","","","","kleiner","2'000.00","gleich","1'800.00","kleiner","1'800.00","gleich","1'500.00","kleiner","1'500.00","gleich","0.00"
 "blackpepper","average annual relative humidity","gleich","95.00","gleich","60.00","kleiner","60.00","gleich","55.00","kleiner","55.00","gleich","50.00","kleiner","50.00","gleich","0.00"
 "blackpepper","average annual relative humidity","","","","","gleich","100.00","grösser","95.00","","","","","","","",""

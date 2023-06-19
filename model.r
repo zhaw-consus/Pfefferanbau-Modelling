@@ -1,106 +1,74 @@
 library(terra)
 library(tidyverse)
 library(httpgd)
-# library(tmap)
+library(tmap)
 library(tictoc)
 library(glue)
-# httpgd::hgd()
+httpgd::hgd()
 
 
-clean_name <- function(inp){
-    inp |>
-        str_remove_all("\\.") |>
-        str_replace_all(" ","-")
-}
+################################################################################
+## Prepare spatial-temporal data (data that varies termporally) ################
+################################################################################
 
-suitability <- function(characteristic_df, characteristic, filename = NULL){
-    # browser()
-    df_filter <- characteristic_df[characteristic_df$Characteristic == characteristic,]
-
-    stopifnot(file.exists(df_filter$file))
-
-    reclass_table <- df_filter$reclass_table[[1]]
-
-    if(!is.na(df_filter$layer)){
-        raster_obj <- rast(df_filter$file, lyrs = df_filter$layer)
-    } else{
-        raster_obj <- rast(df_filter$file)
-    }
-
-    if(characteristic == "slope"){
-        slope <- terrain(raster_obj, "slope", unit =  "radians")
-        raster_obj <- tan(slope) * 100
-    } else if(characteristic == "pH"){
-        raster_obj <- raster_obj/10
-    }
-
-    raster_out <- classify(
-        raster_obj,
-        reclass_table,
-        include.lowest = TRUE, #only affects "min monthly percipitation"
-        filename = filename
-        )
-    names(raster_out) <- characteristic
-    raster_out
-}
-
-resolution_path <- tribble(
-    ~resolution, ~path,
-    "10m", "10min"
-)
-
-data_10min <- read_csv("data-csvs/data-10min.csv") |>
-    mutate(resolution = str_remove(resolution, "1_")) |>
-    # keep naming consistent with worldclim website
-    rename(GCM = model, SSP = szenario, period = time) |>
-    left_join(resolution_path, by = "resolution") |>
-    select(-urls)
+chelsa_files <- list.files("data-chelsa", "\\.tif$",full.names = TRUE)
 
 
-historic_files <- list.files("data-raw/10min-historic-worldclim","\\.tif$",full.names = TRUE)
-
-
-historic_df <- tibble(
-    filename = basename(historic_files),
-    path = dirname(historic_files),
+chelsa_df <- tibble(
+    filename = basename(chelsa_files),
+    path = dirname(chelsa_files),
 ) |>
-    separate(filename, c("version", "resolution","var1","var2"), sep = "_", remove = FALSE) |>
-    mutate(var2 = str_remove(var2, ".tif"))
-
-historic_df_bio <- historic_df |>
-    filter(var1 == "bio")  |>
-    # the following lines adapt the historic naming to the 
-    # naming of the future szenario data
-    rename(variable = var1, layer = var2) |>
-    mutate(
-        variable = "bioc",
-        layer = as.integer(layer)
+    extract(
+        filename, 
+        c("variable","period",NA,"gcm",NA,"ssp","version"),
+        "CHELSA_(\\w+)_(\\d{4}-\\d{4})(_([a-z,0-9,-]+))?(_(\\w+))?_(V\\.\\d\\.\\d).tif",
+        remove = FALSE
         )
 
-historic_df_monthly <- historic_df |>
-    filter(var1 != "bio") |>
-    rename(variable = var1, month = var2,)
+
+chelsa_df <- chelsa_df |>
+#wont use NA, since I might run a bash script on the resulting csv
+    mutate(
+        gcm = ifelse(period == "1981-2010", "not-applicable", gcm), 
+        ssp = ifelse(period == "1981-2010", "not-applicable", ssp),
+        type = ifelse(period == "1981-2010", "historic", "predicted")
+    ) |>
+    # removes hurs_*
+    filter(startsWith(variable,"bio"))
+
+chelsa_df2 <- chelsa_df |>
+    group_by(gcm, ssp, period) |>
+    transmute(variable, file = file.path(path,filename)) |>
+    ungroup()
 
 
-# "GFDL-ESM4" is missing the some time szenarios or time ranges
-data_10min <- data_10min |>
-    filter(GCM != "GFDL-ESM4")
+################################################################################
+## Prepare Crop Characteristics data  ##########################################
+################################################################################
+
 
 crop_characteristics <- read_csv("data-csvs/Cropdb.Input_Crop_Characteristics.csv")
 
+
+crop_characteristics <- crop_characteristics |>
+# see https://github.zhaw.ch/CONSUS/Pfefferanbau-Modelling/issues/3
+    filter(Characteristic != "min. monthly precipitation")  |>
+    # remove non-tempral data for now
+    filter(!(Characteristic %in% c("pH", "slope","average annual relative humidity")))
+
+
 crop_characteristics_long <- crop_characteristics |>
-    group_by(Crop, Characteristic) |>
+    select(-Crop) |>
+    group_by(Characteristic) |>
     mutate(
-        Characteristic_i = row_number()
+        Characteristic_i = row_number(),
+        Optimum = !is.na(`S1 Top Range`)
     ) |>
     pivot_longer(
-        cols = -c(Crop, Characteristic, Characteristic_i),
+        cols = -c(Characteristic, Characteristic_i, Optimum),
         names_to = c("Class", "Level", "Metric"),
         names_pattern = "(S\\d|N) (Top|Bottom) (Range|Value)"
     ) |>
-    # it's safe to remove NA at this point, since for example the 
-    # second mean annual temp does not have an S1 range
-    na.omit() |> 
     pivot_wider(names_from = c(Level, Metric), values_from = value) |>
     mutate(across(ends_with("Value"), \(x){
         parse_number(x, locale = locale(grouping_mark = "'"))
@@ -109,9 +77,9 @@ crop_characteristics_long <- crop_characteristics |>
 
 class_int <- tribble(
     ~Class_int,~Class,
-      1L,"S1",
-      2L,"S2",
-      3L,"S3",
+      1L, "S1",
+      2L, "S2",
+      3L, "S3",
       4L, "N",
 )
 
@@ -122,97 +90,63 @@ crop_characteristics_long <- left_join(
     )
 
 crop_characteristics_nested <- crop_characteristics_long |>
-    group_by(Characteristic) |>
+    na.omit() |>
+    group_by(Characteristic,Characteristic_i, Optimum) |>
     select(Bottom_Value, Top_Value, Class_int) |>
+    arrange(Characteristic, Characteristic_i, Bottom_Value) |>
     group_nest(.key = "reclass_table") 
 
 characteristic_variable <- tribble(
-    ~Characteristic, ~variable, ~layer,
-    "mean annual temperature", "bioc", 1L,
-    "annual precipitation", "bioc", 12L,
-    "min. monthly precipitation", "bioc", 14L,
-    "mean max. temp of the warmest month", "bioc", 5L,
-    "mean min. temp of the coldest month", "bioc", 6L,
+    ~Characteristic, ~variable,
+    "mean annual temperature", "bio1",
+    "mean max. temp of the warmest month", "bio5",
+    "mean min. temp of the coldest month", "bio6",
+    "annual precipitation", "bio12",
+    "min. monthly precipitation", "bio14",
+    # leaving the non-temporal data out for now
+    # "average annual relative humidity", "ph",
+    # "slope", "elevation",
+    # "pH","ph",
 )
 
-crop_characteristics_nested <- crop_characteristics_nested |>
-    left_join(characteristic_variable, by = "Characteristic")
 
-data_10min_nested <- data_10min |>
-    group_by(resolution, GCM, SSP, period) |>
-    transmute(variable, file = file.path(path,filename)) |>
-    group_nest(.key = "characteristic_df") |>
-    mutate(
-        characteristic_df = map(characteristic_df, function(x){
-        crop_characteristics_nested |>
-            left_join(x, by = "variable")
-    })
-    )
-
-
-data_10min_nested$characteristic_df[[1]]
-
-
-characteristic_df_historic <- crop_characteristics_nested |>
-    left_join(transmute(historic_df_bio, variable, layer, file = file.path(path, filename)), by = c("variable", "layer")) |>
-    mutate(layer = NA) # see [1]
-
-# [1]: Very Ugly. But for the future data, the bioclim variables are stored as layers in a single file
-# for the historic data, the variables are stored in individual files. If I pass a layer number to my 
-# suitability function, it will try to load in a specific layer / band from the input file. This is
-# not necessary for the historic data.
-
-
-characteristics <- c(
-    "min. monthly precipitation",
-    "annual precipitation",
-    "mean annual temperature",
-    "mean max. temp of the warmest month",
-    "mean min. temp of the coldest month"
-)
-
-suitability_all <- function(
-    characteristic_df,
-    method = "individual",
-    characteristics = c(
-        "min. monthly precipitation",
-        "annual precipitation",
-        "mean annual temperature",
-        "mean max. temp of the warmest month",
-        "mean min. temp of the coldest month"
-    ),
-    filename = NULL
-    ){
-    # browser()
-    raster_stack <- map(characteristics, \(x){
-        suitability(characteristic_df, x)
+df_to_string <- function(tbl){
+    pmap_chr(tbl, \(Bottom_Value, Top_Value, Class_int){
+        glue("(A>={Bottom_Value})*(A<{Top_Value})*{Class_int}")
     }) |>
-        rast()
-
-    if(method == "individual"){
-        # do nothing
-    } else if(method == "max_only"){
-        raster_stack <- max(raster_stack)
-    } else if(method == "both"){
-        add(raster_stack) <- max(raster_stack)
-    } else{
-        errorCondition(paste("Method '",method, "'not implemented"))
-    }
-
-    if(!is.null(filename)){
-        writeRaster(raster_stack, filename = filename)
-    }
-
-    raster_stack
+        paste(collapse = " + ")
 }
 
+crop_characteristics_nested2 <- crop_characteristics_nested |>
+    left_join(characteristic_variable, by = "Characteristic")  |>
+    na.omit() |> # removes all non-temporal datasets (for now) |>
+    mutate(
+        reclass_string = map_chr(reclass_table, \(x) df_to_string(x))
+    ) |>
+    select(-reclass_table)
 
 
-time_independent_files <- tribble(
-    ~Characteristic, ~file,
-    "pH", "data-raw/phh20/phh2o_5-15cm_mean_10min.tif",
-    "slope", "data-raw/wc2.1_10m_elev.tif"
-)
 
-crop_characteristics_nested2 <- crop_characteristics_nested  |>
-    left_join(time_independent_files, by = "Characteristic")
+
+################################################################################
+## Join filepaths with characteristics #########################################
+################################################################################
+
+characteristics_files <- left_join(crop_characteristics_nested2, chelsa_df2, by = "variable", multiple = "all")
+
+write_csv(characteristics_files, "data-csvs/characteristics_files.csv")
+
+# other <- tribble(
+#     ~variable, ~file,
+#     "ph", "data-raw/phh20/phh2o_5-15cm_mean_10min.tif",
+#     "slope", "data-raw/wc2.1_10m_elev.tif"
+# ) |>
+#     mutate(gcm = "not-applicable",ssp = "not-applicable", period = "not-applicable")
+
+
+
+# all_files <- bind_rows(chelsa_df2, other)
+
+
+
+
