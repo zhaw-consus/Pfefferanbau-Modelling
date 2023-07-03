@@ -15,16 +15,16 @@ cat data-csvs/chelsa-all-CLIMATOLOGIES.csv | grep -e hurs
 
 
 # humidity
-wget -P data--raw/chelsa/ $(cat data-csvs/chelsa-all-CLIMATOLOGIES.csv | grep -e hurs)
+wget -P data-raw/chelsa/ $(cat data-csvs/chelsa-all-CLIMATOLOGIES.csv | grep -e hurs)
 
 
 # climate moisture index (see #10)
-wget -P data--raw/chelsa/ $(cat data-csvs/chelsa-all-CLIMATOLOGIES.csv | grep -e cmi)
+wget -P data-raw/chelsa/ $(cat data-csvs/chelsa-all-CLIMATOLOGIES.csv | grep -e cmi)
 
 # precipitation
 # warning: precipitation for 1981 is a netCDF file (.nc)
-wget -P data--raw/chelsa/ $(cat data-csvs/chelsa-all-CLIMATOLOGIES.csv | grep -e pr)
-
+wget -P data-raw/chelsa/ $(cat data-csvs/chelsa-all-CLIMATOLOGIES.csv | grep -e pr)
+wget -P data-raw/chelsa/ $(cat data-csvs/chesa-pr-1981-2010.csv)
 
 
 
