@@ -1,0 +1,6 @@
+Characteristic,Characteristic_i,Optimum,reclass_string,variable,gcm,ssp,period,file,outname
+average annual relative humidity,1,TRUE,(A>=0)*(A<50)*4 + (A>=50)*(A<55)*3 + (A>=55)*(A<60)*2 + (A>=60)*(A<95)*1,ph,not-applicable,not-applicable,not-applicable,data-raw/phh20/phh2o_5-15cm_mean_4326.tif,average-annual-relative-humidity-1
+average annual relative humidity,2,FALSE,(A>=95)*(A<100)*2,ph,not-applicable,not-applicable,not-applicable,data-raw/phh20/phh2o_5-15cm_mean_4326.tif,average-annual-relative-humidity-2
+pH,1,TRUE,(A>=5)*(A<7)*1 + (A>=7)*(A<7.5)*2 + (A>=7.5)*(A<8.5)*3 + (A>=8.5)*(A<14)*4,ph,not-applicable,not-applicable,not-applicable,data-raw/phh20/phh2o_5-15cm_mean_4326.tif,pH-1
+pH,2,FALSE,(A>=0)*(A<3.5)*4 + (A>=3.5)*(A<4)*3 + (A>=4)*(A<5)*2,ph,not-applicable,not-applicable,not-applicable,data-raw/phh20/phh2o_5-15cm_mean_4326.tif,pH-2
+slope,1,TRUE,(A>=0)*(A<8)*1 + (A>=8)*(A<16)*2 + (A>=16)*(A<30)*3 + (A>=30)*(A<999999)*4,slope,not-applicable,not-applicable,not-applicable,data-elevation/wc2.1_30s_elev_slope.tif,slope-1
