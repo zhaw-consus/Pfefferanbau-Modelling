@@ -29,5 +29,4 @@ module load gcc/7.3.0 miniconda3/4.8.2 lsfm-init-miniconda/1.0.0
 # ##
 conda activate geopython
 
-# bash model-it.sh
-bash length-of-dry-season.sh
+bash model-it.sh

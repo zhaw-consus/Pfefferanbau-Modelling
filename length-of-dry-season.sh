@@ -1,51 +1,61 @@
 
 
-outfolder="data-temp/chelsa-pr"
+tempfolder1="data-temp/chelsa-pr"
+tempfolder2="data-temp/chelsa-pr-sum"
 
-# i=1
-# while IFS=, read -r filename gcm ssp variable month period path
-# do
-#   test $i -eq 1 && ((i=i+1)) && continue
-
-#   gdal_calc.py -A "data-chelsa/$filename" --type=Byte --outfile="${outfolder}/${ssp}_${gcm}_${period}_${month}.tif" --calc="logical_and(A<600, A>=0)" --NoDataValue=255 
-# done < data-csvs/chelsa_pr.csv
-
-
-
-# CONTINUE HERE: MAKE THIS RUN FOR AT LEAST THE HISTORICAL DATA, OR BETTER A COMBINED LOOP FOR HISTORICAL AND FUTURE DATA
 i=1
 while IFS=, read -r filename gcm ssp variable month period path
 do
   test $i -eq 1 && ((i=i+1)) && continue
 
-  echo $ssp
+  
+  if [ "$ssp" == "NA" ]; then
+    outfile="${tempfolder1}/${period}_${month}.tif"
+  else
+    outfile="${tempfolder1}/${ssp}_${gcm}_${period}_${month}.tif"
+  fi
 
-  # echo gdal_calc.py -A "data-chelsa/$filename" --type=Byte --outfile="${outfolder}/${ssp}_${gcm}_${period}_${month}.tif" --calc="logical_and(A<600, A>=0)" --NoDataValue=255 
+  if test -f "$outfile"; then
+    echo "${outfile} exists. Will be overwritten"
+  else
+    echo "${outfile} does not exist"
+  fi
+  gdal_calc.py --overwrite -A "data-raw/chelsa/$filename" --type=Byte --outfile=$outfile --calc="logical_and(A<600, A>=0)" --NoDataValue=255
 done < data-csvs/chelsa_pr.csv 
 
 
-groups=$(ls data-temp/chelsa-pr | cut -d '_' -f 1-4 | sort | uniq)
 
 
-for group in $groups; do
-   
-    input_file="data-temp/chelsa-pr/${group}"
-    temp_file="data-temp/chelsa-pr-sum/${group}.tif"
-
-
-    ssp=$(echo "$group" | cut -d'_' -f1)
-    gcm=$(echo "$group" | cut -d'_' -f2)
-    period=$(echo "$group" | cut -d'_' -f 3-4)
-    period="${period/_/-}"
-
+while IFS=, read -r gcm ssp period
+do
+  if [ "$ssp" == "NA" ]; then
+    infile="${tempfolder1}/${period}"
+    tempfile="${tempfolder2}/${period}.tif"
+    outfile="data-modelled/${period}/length-of-dry-season-1.tif"
+  else
+    infile="${tempfolder1}/${ssp}_${gcm}_${period}"
+    tempfile="${tempfolder2}/${ssp}_${gcm}_${period}.tif"
     outfile="data-modelled/${period}/${ssp}/${gcm}/length-of-dry-season-1.tif"
+  fi
+    
 
+  if test -f "$tempfile"; then
+    echo "${tempfile} exists. Will be overwritten"
+  else
+    echo "${tempfile} does not exist"
+  fi
 
-    #echo $output_file
-    gdal_calc.py --type=Byte --quiet --calc="A+B+C+D+E+F+G+H+I+J+K+L" --outfile=$temp_file --overwrite -A "${input_file}_01.tif" -B "${input_file}_02.tif" -C "${input_file}_03.tif" -D "${input_file}_04.tif" -E "${input_file}_05.tif" -F "${input_file}_06.tif" -G "${input_file}_07.tif" -H "${input_file}_08.tif" -I "${input_file}_09.tif" -J "${input_file}_10.tif" -K "${input_file}_11.tif" -L "${input_file}_12.tif"
+  gdal_calc.py --type=Byte --quiet --calc="A+B+C+D+E+F+G+H+I+J+K+L" --outfile=$tempfile --overwrite -A "${infile}_01.tif" -B "${infile}_02.tif" -C "${infile}_03.tif" -D "${infile}_04.tif" -E "${infile}_05.tif" -F "${infile}_06.tif" -G "${infile}_07.tif" -H "${infile}_08.tif" -I "${infile}_09.tif" -J "${infile}_10.tif" -K "${infile}_11.tif" -L "${infile}_12.tif"
 
-    gdal_calc.py --type=Byte --quiet --calc="(A>=0)*(A<2)*1 + (A>=2)*(A<4)*2 + (A>=4)*(A<5)*3 + (A>=5)*(A<=12)*4" --outfile=$outfile --overwrite -A $temp_file
-done;
+  
+  if test -f "$outfile"; then
+    echo "${outfile} exists. Will be overwritten"
+  else
+    echo "${outfile} does not exist"    
+  fi
+  gdal_calc.py --type=Byte --quiet --calc="(A>=0)*(A<2)*1 + (A>=2)*(A<4)*2 + (A>=4)*(A<5)*3 + (A>=5)*(A<=12)*4" --outfile=$outfile --overwrite -A $tempfile
+done < data-csvs/chelsa_gcms_ssps_periods.cvs
+
 
 
 

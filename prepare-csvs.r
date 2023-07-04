@@ -50,6 +50,13 @@ chelsa_df_pr <- tibble(
     ) |>
     arrange(gcm, ssp, period, month)
 
+
+
+chelsa_df_pr |>
+    distinct(gcm, ssp, period)  |>
+    write_csv("data-csvs/chelsa_gcms_ssps_periods.cvs",col_names = FALSE)
+    
+
 write_csv(chelsa_df_pr, "data-csvs/chelsa_pr.csv")
 
 
@@ -69,8 +76,6 @@ chelsa_df2 <- chelsa_df |>
     ungroup() |>
     bind_rows(non_temporal)|>
     mutate(across(where(is.character),\(x)replace_na(na_if(x, ""), "not-applicable"))) 
-# todo: length-of-dry-season
-
 
 
 ################################################################################
@@ -137,7 +142,7 @@ characteristic_variable <- tribble(
 
 scale_offset <- tribble(
     ~variable, ~scale, ~offset,
-    "bio12",        1,       0, # these values are as expected
+    "bio12",      0.1,       0, # see #25
     "ph",         0.1,       0, # see https://www.isric.org/explore/soilgrids/faq-soilgrids
     "humidity",  0.01,       0, # gdalinfo
     "bio1",       0.1, -273.15, # see https://chelsa-climate.org/bioclim/
@@ -151,8 +156,7 @@ scale_offset <- tribble(
 # see https://gdal.org/programs/gdal_edit.html
 # pixel_value = (true_value-offset)/scale
 
-crop_characteristics_transformed |>
-    filter(str_detect(Characteristic, "length"))
+
 
 crop_characteristics_transformed <- crop_characteristics_long |>
     na.omit() |>
@@ -210,29 +214,9 @@ characteristics_files <- crop_characteristics_nested2  |>
     ) 
 
 
-crop_characteristics_nested2  |>
-    filter(Characteristic == "length of dry season") |>
-    pull(reclass_string)
-
-
-characteristics_files|>
-    select(-temporal) |>
-    filter(period %in% c("1981-2010", "2071-2100", "not-applicable")) |>
-    filter(ssp %in% c("not-applicable","ssp585")) |>
-    filter(gcm %in% c("not-applicable","mpi-esm1-2-hr")) |>
-    write_csv("data-csvs/characteristics_files_filter.csv")
-
-# characteristics_files|>
-#     select(-temporal) |>
-#     filter(period == "1981-2010") |>
-#     write_csv("data-csvs/characteristics_files_filter.csv")
-
-
-
-
-
 characteristics_files |>
     select(-temporal) |>
+    # filter(variable == "bio12") |>
     write_csv("data-csvs/characteristics_files.csv")
 
 
