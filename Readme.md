@@ -42,10 +42,12 @@ find /cfs/earth/scratch/rata/.conda/envs/consus/ -iname "gdal_calc*"
 
 To give grea access to the data, I need to manually sync the respective folders with the group folder on the HPC. To do this, run the following commands from the root directory:
 
+``` 
 # sync input data
-rsync -a ---progress data-raw/chelsa /cfs/earth/scratch/iunr/shared/iunr-consus
+rsync -a --progress data-raw/chelsa /cfs/earth/scratch/iunr/shared/iunr-consus
 
 # sync modelled data
 rsync -a --progress data-modelled /cfs/earth/scratch/iunr/shared/iunr-consus
+```
 
 Since there is no trailing backslash to the source folder, the mentioned folder with be added as a subfolder to the destination folder. 
