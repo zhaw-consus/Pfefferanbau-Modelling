@@ -7,10 +7,11 @@ I'm not too happy about this approach. But I'me developping this step by step an
 Datasets needed:
   - `climatologies/(2011-2040|2041-2070|2071-2100)/*/*/(bio|pr|tas)`
   - `climatologies/1981-2010/(pr|tas|bio|hurs|cmi)`
-  - TODO: Add quality check
-2. **Download data**: Download the datasets specified in the URL. The scripts `one-time-tasks/download-chelsa.sh` facilitate this (linux only). TODO: DHM?
-3. **Download phh20 and DEM**: Download the dataset *phh20* from soildgrids.org and the digital elevation model from worldclim. The scripts to download these files can be found here: `one-time-tasks/get_phh20.sh` 
-4. Run Scripts:
+2. **Quality Checks**: Run `one-time-tasks/quality_check_before_download.R` to check if the set of URLs is complete and does not contain unnecessary files.
+3. **Download data**: Download the datasets specified in the URL. The scripts `one-time-tasks/download-chelsa.sh` facilitate this (linux only).
+4. **Quality Checks**: Run `quality-chekcs.r` to check if the list of downloaded files is complete
+5. **Download phh20 and DEM**: Download the dataset *phh20* from soildgrids.org and the digital elevation model from worldclim. The scripts to download these files can be found here: `one-time-tasks/get_phh20.sh` 
+6. Run Scripts:
    1. **Prepare CSV**: The script `prepare-csvs.r` prepares all the dataframes ~~, functions etc. to do the modelling.~~ over which the next bash script (gdal) can iterate over. TODO: Add some more quality checks
    2. The script `model-it.sh` executes the modelling of the szerarios for future
 and historic data.
