@@ -1,5 +1,5 @@
 outfolder="data-modelled"
-rm -r $outfolder
+# rm -r $outfolder
 i=1
 while IFS=, read -r Characteristic Characteristic_i Optimum variable reclass_string gcm ssp period file outname
 do
@@ -20,7 +20,14 @@ do
   mkdir -p $out_subfolder
 
   outname="${out_subfolder}${outname}.tif"
-  gdal_calc.py --overwrite --NoDataValue=0 --type=Byte -A $file --calc="$reclass_string" --outfile $outname
+  if [ ! -f $outname ]
+  then
+      echo "File does not exist in Bash"
+      gdal_calc.py --overwrite --NoDataValue=0 --type=Byte -A $file --calc="$reclass_string" --outfile $outname
+  else
+      echo "File found. Do something meaningful here"
+  fi
+  
   echo ""
 done < data-csvs/characteristics_files.csv
 
@@ -41,14 +48,27 @@ for dir in $dirs; do
   echo $files
   # seltsamerweise hat nanmax zuerst funktioniert, beim wiederholten mal aber nicht
   # --hideNoData funktioniert nur, weil ich den max Wert suche und 0 als NoData Wert verwendet wird. Für Mittelwertsberechung o.ä. ginge das vermutlich nicht
+  if [ ! -f $maxvaltemp ]
+  then
+      echo "File does not exist in Bash"
+      gdal_calc.py --hideNoData --quiet --type=Byte --overwrite -A $files --outfile=$maxvaltemp --calc="numpy.nanmax(A,axis=0)"
+  else
+      echo "File found. Do something meaningful here"
+  fi
 
-  gdal_calc.py --hideNoData --quiet --type=Byte --overwrite -A $files --outfile=$maxvaltemp --calc="numpy.nanmax(A,axis=0)"
-  gdal_calc.py --hideNoData --quiet --type=Byte --overwrite -A $files $nontemp --outfile=$maxval --calc="numpy.nanmax(A,axis=0)"  
+  if [ ! -f $maxval ]
+  then
+      echo "File does not exist in Bash"
+      gdal_calc.py --hideNoData --quiet --type=Byte --overwrite -A $files $nontemp --outfile=$maxval --calc="numpy.nanmax(A,axis=0)"  
+  else
+      echo "File found. Do something meaningful here"
+  fi
+  
 
   echo ""
 done
 
-echo "starting rsync"
-rsync -a --progress data-modelled /cfs/earth/scratch/iunr/shared/iunr-consus
+# echo "starting rsync"
+# rsync -a --progress data-modelled /cfs/earth/scratch/iunr/shared/iunr-consus
 
 

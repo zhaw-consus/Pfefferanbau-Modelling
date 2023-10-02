@@ -8,6 +8,40 @@ httpgd::hgd()
 
 
 ################################################################################
+## Prepare the data-csvs/chelsa-all-CLIMATOLOGIES.csv dataset (for downloading)
+################################################################################
+
+all_climatologies <- read_csv("data-csvs/chelsa-all-CLIMATOLOGIES.csv")
+
+nrow(all_climatologies)
+all_climatologies <- distinct(all_climatologies)
+
+# write_csv(all_climatologies, "data-csvs/chelsa-all-CLIMATOLOGIES.csv")
+
+
+all_climatologies$period <- str_match(all_climatologies$URL, "\\d{4}-\\d{4}")[, 1]
+all_climatologies$ssp <- str_match(all_climatologies$URL, "ssp\\d{3}")[, 1]
+all_climatologies$gcm <- str_match(all_climatologies$URL, "((GFDL|IPSL|MPI|MRI|UKESM1)-[\\w-]+)")[, 2]
+all_climatologies$variable <- str_match(all_climatologies$URL, "(bio(14|12|5|6|1)_|hurs|cmi|pr)")[, 2]
+
+
+# quality check: do we have all urls?
+# 2011-2040 UKESM1-0-LL ssp126 is missing and cannot be found on the server
+# (https://envicloud.wsl.ch)
+all_climatologies |>
+    filter(period != "1981-2010") |>
+    filter(!is.na(variable)) |>
+    # mutate(variable = ifelse(str_detect(variable, "bio"), "bio", variable)) |>
+    group_by(period, gcm, ssp, variable) |>
+    count() |>
+    ungroup() |>
+    complete(period, nesting(gcm, ssp, variable)) |>
+    ggplot(aes(ssp, n, fill = variable)) +
+    geom_col() +
+    geom_text(aes(label = n), position = position_stack(vjust = 0.5)) +
+    facet_grid(period ~ gcm)
+
+################################################################################
 ## Prepare spatial-temporal data (data that varies termporally) ################
 ################################################################################
 
@@ -30,6 +64,24 @@ chelsa_df <- tibble(
         remove = FALSE
         )
 
+
+# quality check: do we have all szenario data?!
+chelsa_df |>
+    filter(period != "1981-2010") |>
+    # mutate(variable = ifelse(str_detect(variable, "bio"), "bio", variable)) |>
+    group_by(period, gcm, ssp, variable) |>
+    count() |>
+    ungroup() |>
+    complete(period, nesting(gcm, ssp, variable)) |>
+    ggplot(aes(ssp, n, fill = variable)) +
+    geom_col() +
+    geom_text(aes(label = n), position = position_stack(vjust = 0.5)) +
+    facet_grid(period ~ gcm)
+
+chelsa_df |>
+    filter(period == "1981-2010") 
+
+
 chelsa_df_pr <- tibble(
     filename = basename(chelsa_files_pr),
     path = dirname(chelsa_files_pr),
@@ -51,6 +103,18 @@ chelsa_df_pr <- tibble(
     arrange(gcm, ssp, period, month)
 
 
+# quality check: do we have all pr-szenario data?!
+# 2011-2040 usesm1-0-ll ssp126 is missing and cannot be found on the server
+chelsa_df_pr |>
+    filter(period != "1981-2010") |>
+    group_by(period, gcm, ssp, variable) |>
+    count() |>
+    ungroup() |>
+    complete(period, nesting(gcm, ssp, variable)) |>
+    ggplot(aes(ssp, n, fill = variable)) +
+    geom_col() +
+    geom_text(aes(label = n), position = position_stack(vjust = 0.5)) +
+    facet_grid(period ~ gcm)
 
 chelsa_df_pr |>
     distinct(gcm, ssp, period)  |>
@@ -218,10 +282,3 @@ characteristics_files |>
     select(-temporal) |>
     # filter(variable == "bio12") |>
     write_csv("data-csvs/characteristics_files.csv")
-
-
-
-
-
-
-
