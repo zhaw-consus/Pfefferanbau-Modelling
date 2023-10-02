@@ -10,29 +10,34 @@
 # I want to redownload all the files; i should first remove the old files.
 
 # this greps all urls with the relevant bioclimatic variables
-cat data-csvs/chelsa-all-CLIMATOLOGIES.csv | grep -e bio1_ -e bio5_ -e bio6_ -e bio12_ -e bio14_  
 
-
-wget -P data-raw/chelsa/ -nc $(cat data-csvs/chelsa-all-CLIMATOLOGIES.csv | grep -e bio1_ -e bio5_ -e bio6_ -e bio12_ -e bio14_)
-
-
-cat data-csvs/chelsa-all-CLIMATOLOGIES.csv | grep -e hurs
+# how many files will be downloaded?
+bioclim=$(cat data-csvs/chelsa-all-CLIMATOLOGIES.csv | grep -e bio1_ -e bio5_ -e bio6_ -e bio12_ -e bio14_)
+echo $bioclim | wc -w
+wget -P data-raw/chelsa/ -nc $bioclim
 
 
 # humidity
-wget -P data-raw/chelsa/ -nc $(cat data-csvs/chelsa-all-CLIMATOLOGIES.csv | grep -e hurs)
+humidity=$(cat data-csvs/chelsa-all-CLIMATOLOGIES.csv | grep -e hurs)
+echo $humidity | wc -w
+wget -P data-raw/chelsa/ -nc $humidity
 
 
 # climate moisture index (see #10)
-wget -P data-raw/chelsa/ -nc $(cat data-csvs/chelsa-all-CLIMATOLOGIES.csv | grep -e cmi)
+cmi=$(cat data-csvs/chelsa-all-CLIMATOLOGIES.csv | grep -e cmi)
+echo $cmi | wc -w
+wget -P data-raw/chelsa/ -nc $cmi
 
 # precipitation
-# warning: precipitation for 1981 is a netCDF file (.nc)
-wget -P data-raw/chelsa/ -nc $(cat data-csvs/chelsa-all-CLIMATOLOGIES.csv | grep -e pr)
-wget -P data-raw/chelsa/ -nc $(cat data-csvs/chesa-pr-1981-2010.csv)
+# Excluding the files "monthly". These are the monthly precipitation values *per year*
+# Since we are only using the monthly values per *period* for the future data, I think
+# it's enough to do the same for the historical data.
+# Also excluding the only netcdf file, which is at a 5km resolution and shouldn't even
+# be in the list of files.
+pr_files=$(cat data-csvs/chelsa-all-CLIMATOLOGIES.csv | grep -e pr | grep GLOBAL/climatologies | grep .tif$)
+echo $pr_files | wc -w
+wget -P data-raw/chelsa/ -nc $pr_files
 
-
-
-# get elevation data in 30x resolution
-wget --no-check-certificate -P data-raw/elevation https://biogeo.ucdavis.edu/data/worldclim/v2.1/base/wc2.1_30s_elev.zip
-unzip -d data-raw/elevation data-raw/elevation/wc2.1_30s_elev.zip
+# I needed to remove the monthly files, since I exceeded my quota and they took
+# about 400GB of disk space (from the 2TB available)
+# rm $(find data-raw/chelsa/ | grep CHELSA_pr_[0-9][0-9]_[0-9][0-9][0-9][0-9]_V) # remove the monthly files

@@ -3,6 +3,10 @@
 tempfolder1="data-temp/chelsa-pr"
 tempfolder2="data-temp/chelsa-pr-sum"
 
+# Step 1: For each monthly percipitation sum, classify the raster into boolen:
+# value > 600 -> True
+# value < 600 -> False
+# (Nodata: 255)
 i=1
 while IFS=, read -r filename gcm ssp variable month period path
 do
@@ -25,7 +29,10 @@ done < data-csvs/chelsa_pr.csv
 
 
 
-
+# Step 2: For each year
+# 1. sum the monthly boolean rasters
+# 2. classify the sum into 4 classes, depending on the number of months with 
+# percipitation < 600
 while IFS=, read -r gcm ssp period
 do
   if [ "$ssp" == "NA" ]; then

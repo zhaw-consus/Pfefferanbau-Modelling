@@ -1,13 +1,21 @@
 
+## Project Pipeline.
 
-The script `model.r` prepares all the dataframes, functions etc. to do the modelling.
-The script `execute-models.r` executes the modelling of the szerarios for future
+I'm not too happy about this approach. But I'me developping this step by step and each processing step takes a long time to comptue. I therefore have individual (R- and bash-) Scripts that sometimes depend on each other, which means that reproducing the whole pipeline requires the execution of the scripts in the correct order. 
+
+1. **Obtaining updated data-URLs Chelsa / Climatologies** (optional): Create a textfile containing the URLs of all necessary data on https://envicloud.wsl.ch. The step is considered optional, since a version of these URL already exists under `data-csvs/chelsa-all-CLIMATOLOGIES.csv`. However, in the future, these URLs may not be valid or newer, more accurate data might exist. Be as it may, if step 1 was executed, the resulting textfile needs to be saved as a csv in the aforementioned path.
+Datasets needed:
+  - `climatologies/(2011-2040|2041-2070|2071-2100)/*/*/(bio|pr|tas)`
+  - `climatologies/1981-2010/(pr|tas|bio|hurs|cmi)`
+  - TODO: Add quality check
+2. **Download data**: Download the datasets specified in the URL. The scripts `one-time-tasks/download-chelsa.sh` facilitate this (linux only). TODO: DHM?
+3. **Download phh20 and DEM**: Download the dataset *phh20* from soildgrids.org and the digital elevation model from worldclim. The scripts to download these files can be found here: `one-time-tasks/get_phh20.sh` 
+4. Run Scripts:
+   1. **Prepare CSV**: The script `prepare-csvs.r` prepares all the dataframes ~~, functions etc. to do the modelling.~~ over which the next bash script (gdal) can iterate over. TODO: Add some more quality checks
+   2. The script `model-it.sh` executes the modelling of the szerarios for future
 and historic data.
+   3. The script `length-of-dry-season.sh` calculates the variable "*Lenght of dry season*" from the percipitation dataset.
 
-
-on rhel7 (HPC) run this command first:
-
-module load gcc/7.3.0 miniconda3/4.8.2 lsfm-init-miniconda/1.0.0
 
 ## Conda
 
