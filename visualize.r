@@ -1,6 +1,3 @@
-
-
-
 library(httpgd)
 
 library(terra)
