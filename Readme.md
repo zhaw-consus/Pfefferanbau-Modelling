@@ -16,6 +16,9 @@ Datasets needed:
    2. The script `model-it.sh` executes the modelling of the szerarios for future
 and historic data.
    3. The script `length-of-dry-season.sh` calculates the variable "*Lenght of dry season*" from the percipitation dataset.
+   4. The script `aggregate_gcms.R` calculate the modal value over all GCMs in a ssp
+   5. The script `get_diff_future-historic.r` calculates the difference between the modal value (see prev. step) and the historic value. 
+   6. The script `get_limiting_var.r` determins the limiting variable per individual modal. the output is a multilayered tif with 0/1 values (limits / does not limit)
 
 
 ## Conda
@@ -53,10 +56,12 @@ To give grea access to the data, I need to manually sync the respective folders 
 
 ``` 
 # sync input data
-rsync -a --progress data-raw/chelsa /cfs/earth/scratch/iunr/shared/iunr-consus
+rsync -a --progress /cfs/earth/scratch/rata/consus/data-modelled /cfs/earth/scratch/iunr/shared/iunr-consus
 
 # sync modelled data
-rsync -a --progress data-modelled /cfs/earth/scratch/iunr/shared/iunr-consus
+rsync -a --progress /cfs/earth/scratch/rata/consus/data-modelled /cfs/earth/scratch/iunr/shared/iunr-consus
 ```
+
+`-n` or `--dry-run` is to test
 
 Since there is no trailing backslash to the source folder, the mentioned folder with be added as a subfolder to the destination folder. 

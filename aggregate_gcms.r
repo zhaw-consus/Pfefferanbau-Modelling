@@ -1,24 +1,24 @@
-library(httpgd)
+################################################################################
+## Aggregates the GCMS to a single model via the modal value ###################
+################################################################################
 
 library(terra)
 library(tidyverse)
-
-hgd()
-
 
 dirs <- list.dirs("data-modelled", recursive = FALSE)
 dirs <- dirs[str_detect(dirs, "\\d{4}")]
 dirs <- list.dirs(dirs, recursive = FALSE)
 
 # quality check: Do we have maxvals from all gcms, periods and ssps?
-list.dirs(dirs, recursive = FALSE) |>
-    list.files("maxval.tif", full.names = TRUE) |>
-    str_split_fixed("/", 5) |>
-    as.data.frame() |>
-    mutate(val = 1) |>
-    ggplot(aes(V3, val)) +
-    geom_col() +
-    facet_grid(V2~V4)
+# list.dirs(dirs, recursive = FALSE) |>
+#     list.files("maxval.tif", full.names = TRUE) |>
+#     tibble(paths = _) |>
+#     separate(paths, c("junk", "period", "ssp", "gcm", "junk2"), "/", remove = FALSE)  |>
+#     select(-starts_with("junk")) |>
+#     mutate(size = file.info(paths)$size/1e6) |>
+#     ggplot(aes(ssp, size)) +
+#     geom_col() +
+#     facet_grid(period~gcm)
 
 
 # create aggregations of all gcms per period and ssp via the modal
@@ -33,6 +33,3 @@ map(dirs, \(rootpath){
     uncertainty <- sum(maxval_isequal)/nlyr(maxval_isequal)
     writeRaster(uncertainty, file.path(rootpath, "modal_uncertainty.tif"), overwrite = TRUE)
 }, .progress = TRUE)
-
-
-
