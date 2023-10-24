@@ -24,7 +24,7 @@ do
   else
     echo "${outfile} does not exist"
   fi
-  gdal_calc.py --overwrite -A "data-raw/chelsa/$filename" --type=Byte --outfile=$outfile --calc="logical_and(A<600, A>=0)" --NoDataValue=255
+  #gdal_calc.py --overwrite -A "data-raw/chelsa/$filename" --type=Byte --outfile=$outfile --calc="logical_and(A<600, A>=0)" --NoDataValue=255
 done < data-csvs/chelsa_pr.csv 
 
 
