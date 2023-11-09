@@ -23,7 +23,6 @@ and historic data.
 
 ## Conda
 
-asfdsdfasdf
 run `conda activate consus` to run the r-code in this repo
 run `conda activate geopython` to run the bash files (gdal_* etc) in this repo
 
