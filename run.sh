@@ -19,3 +19,6 @@ conda activate nils-r
 Rscript --vanilla get_limiting_var.r
 
 rsync -a --progress data-modelled /cfs/earth/scratch/iunr/shared/iunr-consus
+chown -R rata:iunr-consus /cfs/earth/scratch/iunr/shared/iunr-consus
+
+

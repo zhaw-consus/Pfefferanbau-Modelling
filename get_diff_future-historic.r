@@ -24,7 +24,7 @@ map(modal_vals, \(x){
     # browser()
     rootdir <- dirname(x)
     maxval_future <- rast(x)
-    difference <- maxval_future - maxval_historic
+    difference <- maxval_historic - maxval_future
     writeRaster(difference, file.path(rootdir, "maxval_diff.tif"), overwrite = TRUE, datatype = "INT2S")
 }, .progress = TRUE)
 
