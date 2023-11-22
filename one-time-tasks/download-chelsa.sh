@@ -11,22 +11,25 @@
 
 # this greps all urls with the relevant bioclimatic variables
 
+dest_dir="/cfs/earth/scratch/iunr/shared/iunr-consus/data-raw/chelsa"
+
+
 # how many files will be downloaded?
 bioclim=$(cat data-csvs/chelsa-all-CLIMATOLOGIES.csv | grep -e bio1_ -e bio5_ -e bio6_ -e bio12_ -e bio14_)
 echo $bioclim | wc -w
-wget -P data-raw/chelsa/ -nc $bioclim
+wget -P $dest_dir -nc $bioclim
 
 
 # humidity
 humidity=$(cat data-csvs/chelsa-all-CLIMATOLOGIES.csv | grep -e hurs)
 echo $humidity | wc -w
-wget -P data-raw/chelsa/ -nc $humidity
+wget -P $dest_dir -nc $humidity
 
 
 # climate moisture index (see #10)
 cmi=$(cat data-csvs/chelsa-all-CLIMATOLOGIES.csv | grep -e cmi)
 echo $cmi | wc -w
-wget -P data-raw/chelsa/ -nc $cmi
+wget -P $dest_dir -nc $cmi
 
 # precipitation
 # Excluding the files "monthly". These are the monthly precipitation values *per year*
@@ -36,8 +39,8 @@ wget -P data-raw/chelsa/ -nc $cmi
 # be in the list of files.
 pr_files=$(cat data-csvs/chelsa-all-CLIMATOLOGIES.csv | grep -e pr | grep GLOBAL/climatologies | grep .tif$)
 echo $pr_files | wc -w
-wget -P data-raw/chelsa/ -nc $pr_files
+wget -P $dest_dir -nc $pr_files
 
 # I needed to remove the monthly files, since I exceeded my quota and they took
 # about 400GB of disk space (from the 2TB available)
-# rm $(find data-raw/chelsa/ | grep CHELSA_pr_[0-9][0-9]_[0-9][0-9][0-9][0-9]_V) # remove the monthly files
+# rm $(find $dest_dir | grep CHELSA_pr_[0-9][0-9]_[0-9][0-9][0-9][0-9]_V) # remove the monthly files

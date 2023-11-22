@@ -5,7 +5,9 @@
 library(terra)
 library(tidyverse)
 
-dirs <- list.dirs("data-modelled", recursive = FALSE)
+data_modelled <- "/cfs/earth/scratch/iunr/shared/iunr-consus/data-modelled"
+
+dirs <- list.dirs(data_modelled, recursive = FALSE)
 dirs <- dirs[str_detect(dirs, "\\d{4}")]
 dirs <- list.dirs(dirs, recursive = FALSE)
 

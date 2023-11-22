@@ -7,9 +7,12 @@
 
 library(terra)
 library(tidyverse)
-nontemp <- list.files("data-modelled/non-temporal", full.names = TRUE)
 
-dirs_temporal <- list.dirs("data-modelled", recursive = FALSE)
+data_modelled <- "/cfs/earth/scratch/iunr/shared/iunr-consus/data-modelled"
+
+nontemp <- list.files(file.path(data_modelled,"non-temporal"), full.names = TRUE)
+
+dirs_temporal <- list.dirs(data_modelled, recursive = FALSE)
 dirs_temporal <- dirs_temporal[str_detect(dirs_temporal, "\\d{4}")]
 dirs_temporal <- list.dirs(dirs_temporal, recursive = FALSE) |>
     list.dirs(recursive = FALSE)
@@ -35,42 +38,48 @@ map(dirs_temporal, \(rootdir){
 })
 
 
+
+
+
+
+
 # aggregate the limiting factor over all gcm's via the modal value
 dirs_temporal |>
     dirname()  |>
     unique() |>
     map(\(rootdir){
-    is_limiting_gcm <- list.files(rootdir, "is_limiting.tif", full.names = TRUE, recursive = TRUE) 
 
-    is_limiting_layer_names <- map(is_limiting_gcm, rast) |>
-        map(names)
+        is_limiting_gcm <- list.files(rootdir, "is_limiting.tif", full.names = TRUE, recursive = TRUE) 
+
+        is_limiting_layer_names <- map(is_limiting_gcm, rast) |>
+            map(names)
 
 
-    # do all datasets have the same amout of layers?
-    stopifnot(length(unique(lengths(is_limiting_layer_names))) == 1)
+        # do all datasets have the same amout of layers?
+        stopifnot(length(unique(lengths(is_limiting_layer_names))) == 1)
 
-    # are the layers in the same order (i.e. same variable with the same names?
-    map_lgl(is_limiting_layer_names, \(inner){
-        map_lgl(is_limiting_layer_names, \(outer){
-            all(inner == outer)
+        # are the layers in the same order (i.e. same variable with the same names?
+        map_lgl(is_limiting_layer_names, \(inner){
+            map_lgl(is_limiting_layer_names, \(outer){
+                all(inner == outer)
+            }) |>
+            all()
         }) |>
-        all()
-    }) |>
-        all() |>
-        stopifnot()
+            all() |>
+            stopifnot()
 
 
-    outdir <- file.path(rootdir, "is_limiting")
-    dir.create(outdir,  recursive = TRUE)
-    
+        outdir <- file.path(rootdir, "is_limiting")
+        dir.create(outdir,  recursive = TRUE)
+        
 
-    # if so, iterate over the first set of layer names
-    imap(is_limiting_layer_names[[1]], \(layer_name, layer_number){
-        outfile <- file.path(outdir, paste0(layer_name, ".tif"))
-        map(is_limiting_gcm, \(x)rast(x, lyrs = layer_number)) |>
-            rast() |>
-            modal(filename = outfile, wopt = c(datatype = "INT1U"), overwrite = TRUE)
-    })
+        # if so, iterate over the first set of layer names
+        imap(is_limiting_layer_names[[1]], \(layer_name, layer_number){
+            outfile <- file.path(outdir, paste0(layer_name, ".tif"))
+            map(is_limiting_gcm, \(x)rast(x, lyrs = layer_number)) |>
+                rast() |>
+                modal(filename = outfile, wopt = c(datatype = "INT1U"), overwrite = TRUE)
+        })
 })
 
 

@@ -53,13 +53,46 @@ run `conda activate geopython` to run the bash files (gdal_* etc) in this repo
 (i couldn't create one single environment for some reason. gdal_calc.py is missing from the consus environment, all r stuff is missing from the geopython env)
 
 
-## Download data locally
 
-go to `/home/nils/ownCloud/Projekte/2023_Pfefferanbau/`
+## HPC Notes
+
+
+### Modules & Conda
+
+
+```
+# RHEL 8
+module load gcc/9.4.0-pe5.34 miniconda3/4.12.0 lsfm-init-miniconda/1.0.0
+
+
+```
+### Copy the data from the HPC to my local machine
+
+Go to your *local* project folder (e.g. `/home/nils/ownCloud/Projekte/2023_Pfefferanbau/`) and run the following command:
 
 ```
 scp -r rata@login.hpc.zhaw.ch:/cfs/earth/scratch/rata/consus/data-modelled .
 ```
+
+
+
+
+### Sync with group folder
+
+To give grea access to the data, I need to manually sync the respective folders with the group folder on the HPC. To do this, run the following commands from the root directory:
+
+``` 
+# sync input data
+rsync -a --progress /cfs/earth/scratch/rata/consus/data-raw /cfs/earth/scratch/iunr/shared/iunr-consus
+
+# sync modelled data
+rsync -a --progress /cfs/earth/scratch/rata/consus/data-modelled /cfs/earth/scratch/iunr/shared/iunr-consus
+```
+
+`-n` or `--dry-run` is to test
+
+Since there is no trailing backslash to the source folder, the mentioned folder with be added as a subfolder to the destination folder. 
+
 
 
 ### gdal_calc.py
@@ -73,25 +106,7 @@ find /cfs/earth/scratch/rata/.conda/envs/consus/ -iname "gdal_calc*"
 ```
 
 
-### Sync with group folder
-
-To give grea access to the data, I need to manually sync the respective folders with the group folder on the HPC. To do this, run the following commands from the root directory:
-
-``` 
-# sync input data
-rsync -a --progress /cfs/earth/scratch/rata/consus/data-modelled /cfs/earth/scratch/iunr/shared/iunr-consus
-
-# sync modelled data
-rsync -a --progress /cfs/earth/scratch/rata/consus/data-modelled /cfs/earth/scratch/iunr/shared/iunr-consus
-```
-
-`-n` or `--dry-run` is to test
-
-Since there is no trailing backslash to the source folder, the mentioned folder with be added as a subfolder to the destination folder. 
-
-
-
-## HPC
+### Sepcs
 
 
 Output from `lscpu`:

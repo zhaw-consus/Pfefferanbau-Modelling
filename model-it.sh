@@ -1,4 +1,4 @@
-outfolder="data-modelled"
+outfolder="/cfs/earth/scratch/iunr/shared/iunr-consus/data-modelled"
 # rm -r $outfolder
 i=1
 while IFS=, read -r Characteristic Characteristic_i Optimum variable reclass_string gcm ssp period file outname
@@ -32,12 +32,12 @@ do
 done < data-csvs/characteristics_files.csv
 
 
-nontemp=$(ls -d data-modelled/non-temporal/* | grep ".tif$")
+nontemp=$(ls -d $outfolder/non-temporal/* | grep ".tif$")
 
 echo $nontemp
 
 # loop over the output of this:
-dirs=$(dirname $(find data-modelled -iname "*tif") | sort | uniq | grep -v "non-temporal")
+dirs=$(dirname $(find $outfolder -iname "*tif") | sort | uniq | grep -v "non-temporal")
 
 for dir in $dirs; do
   echo $dir

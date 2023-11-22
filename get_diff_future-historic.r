@@ -6,8 +6,10 @@
 library(terra)
 library(tidyverse)
 
+data_modelled <- "/cfs/earth/scratch/iunr/shared/iunr-consus/data-modelled"
 
-modal_vals <- list.files("data-modelled", "maxval_modal.tif", recursive = TRUE, full.names = TRUE)
+
+modal_vals <- list.files(data_modelled, "maxval_modal.tif", recursive = TRUE, full.names = TRUE)
 
 # quality check: did all aggregates work?
 # tibble(paths = modal_vals, size = file.info(modal_vals)$size) |>
@@ -19,7 +21,7 @@ modal_vals <- list.files("data-modelled", "maxval_modal.tif", recursive = TRUE, 
 
 
 ## Calculate diifference between historic and future climate szenarios (modal of gcm)
-maxval_historic <- rast("data-modelled/1981-2010/maxval.tif")
+maxval_historic <- rast(file.path(data_modelled,"1981-2010/maxval.tif"))
 map(modal_vals, \(x){
     # browser()
     rootdir <- dirname(x)

@@ -16,9 +16,6 @@
 
 module load gcc/9.4.0-pe5.34 miniconda3/4.12.0 lsfm-init-miniconda/1.0.0
 conda activate nils-r
-Rscript --vanilla get_limiting_var.r
 
-rsync -a --progress data-modelled /cfs/earth/scratch/iunr/shared/iunr-consus
-chown -R rata:iunr-consus /cfs/earth/scratch/iunr/shared/iunr-consus
-
+sh length-of-dry-season.sh
 

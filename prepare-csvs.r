@@ -13,8 +13,9 @@ httpgd::hgd()
 ## Prepare spatial-temporal data (data that varies termporally) ################
 ################################################################################
 
+data_raw_chelsa <- "/cfs/earth/scratch/iunr/shared/iunr-consus/data-raw/chelsa"
 
-chelsa_files <- list.files("data-raw/chelsa", "\\.tif$",full.names = TRUE)
+chelsa_files <- list.files(data_raw_chelsa, "\\.tif$",full.names = TRUE)
 precipitation_bool <- str_detect(chelsa_files, "pr")
 
 chelsa_files_pr <- chelsa_files[precipitation_bool]
@@ -197,17 +198,21 @@ crop_characteristics_transformed <- crop_characteristics_long |>
     left_join(characteristic_variable, by = "Characteristic")   |>
     left_join(scale_offset, by = "variable")  |> 
     mutate(across(ends_with("_Value"), list("adjusted" = \(x) (x-offset)/scale))) 
-    
 
+99999
+999999
 crop_characteristics_transformed |>
     mutate(
         Bottom_Value = ifelse(Bottom_Value == -999999.0, -Inf, Bottom_Value),
-        Top_Value = ifelse(Top_Value == 999999.0, Inf, Top_Value),
-    ) |>
-    ggplot(aes(Bottom_Value, Class_int)) +
-    geom_step() +
-    scale_y_continuous(limits = c(0,4))+
-    facet_wrap(~Characteristic, scale = "free_x") 
+        Top_Value = ifelse(Top_Value %in% c(99999,999999.0), Inf, Top_Value),
+    ) |> 
+    ggplot(aes(y = Class_int)) +
+    geom_errorbarh(aes(xmin = Bottom_Value, xmax = Top_Value, colour = factor(Class_int)), height = .2, lwd = 2) +
+    scale_colour_brewer("Class",palette = "Spectral",direction = -1) +
+    facet_wrap(~Characteristic, scale = "free_x", labeller = labeller(Characteristic = str_to_title), ncol = 4) +
+    scale_y_continuous("Class") +
+    theme_light() +
+    theme(legend.position = "none")
     
 
 
@@ -245,6 +250,9 @@ characteristics_files <- crop_characteristics_nested2  |>
     mutate(
         outname = paste(str_replace_all(str_remove(Characteristic, "\\."), " ", "-"), Characteristic_i, sep = "-")
     ) 
+
+
+
 
 
 characteristics_files |>
