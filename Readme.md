@@ -11,10 +11,13 @@ The code is written in `R` and `bash` (`gdal`) and was executed the [ZHAW LSFM H
 
 ## Project Pipeline
 
-Below is a description of the project pipline. 
+The project pipeline consists of individual scripts that typically produce outputs which are used by other scripts. The following diagram shows the pipeline and the dependencies between the scripts. The scripts are numbered in the order they should be executed. 
+
+![](images/workflow.png)
 
 
-### Obtaning the data
+
+### Obtaining the data
 
 The following inputs are needed to run the code in this repository. The data is not included in this repository, but can be obtained openly as described below. The data should be stored in a folder named `data-raw`.
 
@@ -107,7 +110,7 @@ find /cfs/earth/scratch/rata/.conda/envs/consus/ -iname "gdal_calc*"
 ```
 
 
-### Sepcs
+### Specs
 
 
 Output from `lscpu`:

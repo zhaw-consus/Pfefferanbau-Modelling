@@ -12,8 +12,7 @@ dirs <- dirs[str_detect(dirs, "2\\d{3}-2\\d{3}")] # removes non-temporal and cur
 dirs <- list.dirs(dirs, recursive = FALSE)
 
 # temporary filter for testing
-# dirs <- dirs[str_detect(dirs,"2041-2070") & !str_detect(dirs, "ssp370")]
-
+dirs <- dirs[str_detect(dirs,"2041-2070|2071-2100") & !str_detect(dirs, "ssp370")]
 
 # quality check: Do we have maxvals from all gcms, periods and ssps?
 list.dirs(dirs, recursive = FALSE) |>
@@ -36,14 +35,21 @@ map(dirs, \(rootpath){
     maxvals <- list.files(rootpath, "maxval\\.tif$", recursive = TRUE, full.names = TRUE)
 
     maxvals_rast <- rast(maxvals)
-    maxvals_mode <- modal(
-        maxvals_rast, 
-        filename = file.path(rootpath, "maxval_modal.tif"), 
-        overwrite = TRUE, 
-        wopt = list(datatype = "INT1U")
+
+    maxval_modal <- file.path(rootpath, "maxval_modal.tif")
+
+    if(!file.exists(maxval_modal)){
+        maxvals_mode <- modal(
+            maxvals_rast, 
+            filename = maxval_modal, 
+            overwrite = TRUE, 
+            wopt = list(datatype = "INT1U")
         )
-    # writeRaster(maxvals_mode, )
-    maxval_isequal <- maxvals_rast == maxvals_mode
-    uncertainty <- sum(maxval_isequal, na.rm = TRUE)/nlyr(maxval_isequal)
-    writeRaster(uncertainty, file.path(rootpath, "modal_uncertainty.tif"), overwrite = TRUE)
+
+        maxval_isequal <- maxvals_rast == maxvals_mode
+        uncertainty <- sum(maxval_isequal, na.rm = TRUE)/nlyr(maxval_isequal)
+        writeRaster(uncertainty, file.path(rootpath, "modal_uncertainty.tif"), overwrite = TRUE)
+    }
+    
+
 }, .progress = TRUE)

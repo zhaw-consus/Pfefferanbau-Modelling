@@ -41,7 +41,7 @@ echo $nontemp
 dirs_gcms=$(ls -d $outfolder/2*/*/*/ | grep -v "/_") # 
 
 # temporary filter for the 2041 GCMs (testing)
-dirs_gcms=$(echo "$dirs_gcms" | grep 2041 | grep -v ssp370)
+# dirs_gcms=$(echo "$dirs_gcms" | grep -e 2041-2070 -e 2071-2100 | grep -v "/_")
 
 dirs_today=$(ls -d $outfolder/1*)    # gets the directiories of the current climate
 dirs=$(echo $dirs_gcms $dirs_today)  # combines the two lists

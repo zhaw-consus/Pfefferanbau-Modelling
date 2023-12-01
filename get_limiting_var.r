@@ -20,9 +20,13 @@ subdirs_temporal1 <- list.dirs(dirs_temporal1, recursive = FALSE) |>
 
 subdirs_temporal1 <- subdirs_temporal1[!str_detect(basename(subdirs_temporal1), "^_")]
 
+# filter only ssps and periods of interest
+subdirs_temporal1 <- subdirs_temporal1[str_detect(subdirs_temporal1, "2041-2070|2071-2100") & str_detect(subdirs_temporal1, "ssp126|ssp585")]
+
 subdirs_temporal2 <- dirs_temporal[str_detect(dirs_temporal, "1\\d{3}-\\d{4}")]
 
 subdirs_temporal <- c(subdirs_temporal1, subdirs_temporal2)
+
 
 # which gcms / ssps are missing files and which ones?
 tibble(dir = subdirs_temporal1) |>
@@ -72,34 +76,34 @@ map(subdirs_temporal, \(rootdir){
 # aggregate the limiting factor over all gcm's via the modal value
 # careful! this loop must be adjusted for the fact that the above loop was re-
 # configured in such a way that each layer is it's own file.
-subdirs_temporal1 |>
-    dirname()  |>
-    unique() |>
-    map(\(rootdir){
-        browser()
+# subdirs_temporal1 |>
+#     dirname()  |>
+#     unique() |>
+#     map(\(rootdir){
+#         browser()
 
-        aggregation_subfolder <- file.path(rootdir, "aggregation")
+#         aggregation_subfolder <- file.path(rootdir, "aggregation")
 
-        is_limiting_gcm <- list.files(rootdir, "is_limiting.tif", full.names = TRUE, recursive = TRUE) 
+#         is_limiting_gcm <- list.files(rootdir, "is_limiting.tif", full.names = TRUE, recursive = TRUE) 
 
-        root_subdirs <- list.dirs(rootdir, recursive = FALSE)
-        root_subdirs <- root_subdirs[basename(root_subdirs) != "_is_limiting"]
-        root_subdirs_is_limiting <- list.dirs(root_subdirs)
-        root_subdirs_is_limiting <- root_subdirs_is_limiting[endsWith(root_subdirs_is_limiting, "aggregation/is_limiting")]
+#         root_subdirs <- list.dirs(rootdir, recursive = FALSE)
+#         root_subdirs <- root_subdirs[basename(root_subdirs) != "_is_limiting"]
+#         root_subdirs_is_limiting <- list.dirs(root_subdirs)
+#         root_subdirs_is_limiting <- root_subdirs_is_limiting[endsWith(root_subdirs_is_limiting, "aggregation/is_limiting")]
       
         
-        outdir <- file.path(rootdir, "_is_limiting")
-        dir.create(outdir,  recursive = TRUE)
+#         outdir <- file.path(rootdir, "_is_limiting")
+#         dir.create(outdir,  recursive = TRUE)
         
 
-        # if so, iterate over the first set of layer names
-        imap(is_limiting_layer_names[[1]], \(layer_name, layer_number){
-            outfile <- file.path(outdir, paste0(layer_name, ".tif"))
-            map(is_limiting_gcm, \(x)rast(x, lyrs = layer_number)) |>
-                rast() |>
-                modal(filename = outfile, wopt = c(datatype = "INT1U"), overwrite = TRUE)
-        })
-})
+#         # if so, iterate over the first set of layer names
+#         imap(is_limiting_layer_names[[1]], \(layer_name, layer_number){
+#             outfile <- file.path(outdir, paste0(layer_name, ".tif"))
+#             map(is_limiting_gcm, \(x)rast(x, lyrs = layer_number)) |>
+#                 rast() |>
+#                 modal(filename = outfile, wopt = c(datatype = "INT1U"), overwrite = TRUE)
+#         })
+# })
 
 
 

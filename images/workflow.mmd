@@ -1,0 +1,31 @@
+%%{init: {'theme': 'dark', 'themeVariables': { 'primaryTextColor': 'white'}}}%%
+graph LR
+    M["data-csvs/chelsa-all-CLIMATOLOGIES.csv"] --> N{"download-chelsa.sh"}
+    N --> A
+    A["data-raw/chelsa"] --> B{"prepare-csvs.r"}
+    L["data-csvs/Cropdb.Input_Crop_Characteristics.csv"] --> B
+    B --> C["data-csvs/chelsa_pr.csv"]
+    B --> D["chelsa_gcms_ssps_periods.cvs"]
+    B --> E["data-csvs/characteristics_files.csv"]
+    E --> F{"model-it.sh"}
+    E --> G{"get-raster-stats.sh"}
+    D --> H{"length-of-dry-season.sh"}
+    C --> H
+    H --> I["tempfolder1"]
+    I --> J["tempfolder2"]
+    H --> J
+    J --> K["length-of-dry-season-1.tif"]
+    H --> K
+    F --> O["annual-precipitation-1\nannual-precipitation-2...\nmany more"]
+    O --> P["maxval.tif"]
+    F --> P
+    H --> P
+    K --> P
+    P --> Q{"aggregate-gcms.r"}
+    Q --> R["maxval_modal.tif"]
+    Q --> S["modal_uncertainty.tif"]
+    P --> U{"get_limiting_var.r"}
+    K --> U
+    O --> U
+    U --> V["is_limiting.tif (per GCM)"]
+    V --> W["is_limiting (per SSP)"]
