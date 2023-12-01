@@ -3,19 +3,20 @@
 tempfolder1="data-temp/chelsa-pr"
 tempfolder2="data-temp/chelsa-pr-sum"
 data_modelled_dir="/cfs/earth/scratch/iunr/shared/iunr-consus/data-modelled"
+data_raw_dir="/cfs/earth/scratch/iunr/shared/iunr-consus/data-raw"
+
+mkdir -p $tempfolder1;
+mkdir -p $tempfolder2;
+
 
 # Step 1: For each monthly percipitation sum, classify the raster into boolen:
-# value > 600 -> True
-# value < 600 -> False
+# value < 600: True
+# value > 600: False
 # (Nodata: 255)
 i=1
 while IFS=, read -r filename gcm ssp variable month period path
 do
   test $i -eq 1 && ((i=i+1)) && continue
-
-
-  
-  
   
   if [ "$ssp" == "NA" ]; then
     outfile="${tempfolder1}/${period}_${month}.tif"
@@ -23,15 +24,16 @@ do
     outfile="${tempfolder1}/${ssp}_${gcm}_${period}_${month}.tif"
   fi
 
+    infile="${data_raw_dir}/chelsa/$filename"
+
   if test -f "$outfile"; then
     echo "${outfile} exists. Nothing happens"
-
   else
-    echo "${outfile} does not exist"
-    gdal_calc.py --overwrite -A "data-raw/chelsa/$filename" --type=Byte --outfile=$outfile --calc="logical_and(A<600, A>=0)" --NoDataValue=255
+    # echo "${outfile} does not exist"
+    gdal_calc.py -A $infile --type=Byte --outfile=$outfile --calc="logical_and(A<600, A>=0)" --NoDataValue=255
   fi
   
-done < data-csvs/chelsa_pr.csv 
+done < data-csvs/chelsa_pr.csv
 
 
 

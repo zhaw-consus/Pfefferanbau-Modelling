@@ -10,66 +10,85 @@ library(tidyverse)
 
 data_modelled <- "/cfs/earth/scratch/iunr/shared/iunr-consus/data-modelled"
 
+
 nontemp <- list.files(file.path(data_modelled,"non-temporal"), full.names = TRUE)
 
 dirs_temporal <- list.dirs(data_modelled, recursive = FALSE)
-dirs_temporal <- dirs_temporal[str_detect(dirs_temporal, "\\d{4}")]
-dirs_temporal <- list.dirs(dirs_temporal, recursive = FALSE) |>
+dirs_temporal1 <- dirs_temporal[str_detect(dirs_temporal, "2\\d{3}-\\d{4}")]
+subdirs_temporal1 <- list.dirs(dirs_temporal1, recursive = FALSE) |>
     list.dirs(recursive = FALSE)
 
-# get the limiting factor per year, ssp and gcm
-map(dirs_temporal, \(rootdir){
-    temporal <- list.files(rootdir, full.names = TRUE)
-    temporal <- temporal[!str_detect(temporal, "maxval|is_limiting")]
-    all_inputs <- rast(c(temporal, nontemp))
-    maxval <- rast(file.path(rootdir, "maxval.tif"))
+subdirs_temporal1 <- subdirs_temporal1[!str_detect(basename(subdirs_temporal1), "^_")]
 
+subdirs_temporal2 <- dirs_temporal[str_detect(dirs_temporal, "1\\d{3}-\\d{4}")]
+
+subdirs_temporal <- c(subdirs_temporal1, subdirs_temporal2)
+
+# which gcms / ssps are missing files and which ones?
+tibble(dir = subdirs_temporal1) |>
+    mutate(n_files = map_int(dir, \(x)length(list.files(x))))  |>
+    # filter(n_files < 10) |>
+    mutate(
+        ssp = str_extract(dir, "ssp\\d{3}"),
+        gcm = basename(dir),
+        period = str_extract(dir, "\\d{4}-\\d{4}")
+        )  |>
+    ggplot(aes(ssp, n_files, fill = n_files == 10)) +
+    geom_col() +
+    facet_grid(period~gcm) +
+    theme(legend.position = "none")
+
+# get the limiting factor per year, ssp and gcm
+map(subdirs_temporal, \(rootdir){
+    browser()
+    temporal <- list.files(rootdir, "\\.tif$", full.names = TRUE)
+    aggregation_subfolder <- file.path(rootdir, "aggregation")
+
+    all_inputs <- rast(c(temporal, nontemp))
+    maxval <- rast(file.path(aggregation_subfolder, "maxval.tif"))
+
+    aggregation_subfolder_limiting <- file.path(aggregation_subfolder, "is_limiting")
+    dir.create(aggregation_subfolder_limiting, recursive = TRUE)
+
+    filenames <- file.path(aggregation_subfolder_limiting, paste0(names(all_inputs), ".tif"))
+    
     # if maxval is 1, then no factor is limiting. 
-    maxval[maxval == 1] <- NA
     is_limiting <- terra::compare(
         maxval, 
         all_inputs, 
-        "==",  
-        filename = file.path(rootdir, "is_limiting.tif"), 
-        overwrite = TRUE, 
-        datatype = "INT1U",
-        names = names(all_inputs)
+        "=="
         )
+    is_limiting[maxval == 1] <- NA
+
+    writeRaster(is_limiting, filename = filenames, overwrite = TRUE, datatype = "INT1U")
 })
 
 
 
 
-
+    
 
 
 # aggregate the limiting factor over all gcm's via the modal value
-dirs_temporal |>
+# careful! this loop must be adjusted for the fact that the above loop was re-
+# configured in such a way that each layer is it's own file.
+subdirs_temporal1 |>
     dirname()  |>
     unique() |>
     map(\(rootdir){
+        browser()
+
+        aggregation_subfolder <- file.path(rootdir, "aggregation")
 
         is_limiting_gcm <- list.files(rootdir, "is_limiting.tif", full.names = TRUE, recursive = TRUE) 
 
-        is_limiting_layer_names <- map(is_limiting_gcm, rast) |>
-            map(names)
-
-
-        # do all datasets have the same amout of layers?
-        stopifnot(length(unique(lengths(is_limiting_layer_names))) == 1)
-
-        # are the layers in the same order (i.e. same variable with the same names?
-        map_lgl(is_limiting_layer_names, \(inner){
-            map_lgl(is_limiting_layer_names, \(outer){
-                all(inner == outer)
-            }) |>
-            all()
-        }) |>
-            all() |>
-            stopifnot()
-
-
-        outdir <- file.path(rootdir, "is_limiting")
+        root_subdirs <- list.dirs(rootdir, recursive = FALSE)
+        root_subdirs <- root_subdirs[basename(root_subdirs) != "_is_limiting"]
+        root_subdirs_is_limiting <- list.dirs(root_subdirs)
+        root_subdirs_is_limiting <- root_subdirs_is_limiting[endsWith(root_subdirs_is_limiting, "aggregation/is_limiting")]
+      
+        
+        outdir <- file.path(rootdir, "_is_limiting")
         dir.create(outdir,  recursive = TRUE)
         
 

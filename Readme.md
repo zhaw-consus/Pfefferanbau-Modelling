@@ -33,10 +33,10 @@ The data can be downloaded using a bash script (`one-time-tasks/download-chelsa.
 
 
 3. **Download data**: Download the datasets specified in the URL. The scripts `one-time-tasks/download-chelsa.sh` facilitate this (linux only).
-4. **Quality Checks**: Run `quality-chekcs.r` to check if the list of downloaded files is complete
+4. **Quality Checks**: Run `quality_check.r` to check if the list of downloaded files is complete
 5. **Download phh20 and DEM**: Download the dataset *phh20* from soildgrids.org and the digital elevation model from worldclim. The scripts to download these files can be found here: `one-time-tasks/get_phh20.sh` 
 6. Run Scripts:
-   1. **Prepare CSV**: The script `prepare-csvs.r` prepares all the dataframes ~~, functions etc. to do the modelling.~~ over which the next bash script (gdal) can iterate over. TODO: Add some more quality checks
+   1. **Prepare CSV**: The script `prepare-csvs.r` prepares all the csvs over which the next bash script (gdal) can iterate. TODO: Add some more quality checks
    2. The script `model-it.sh` executes the modelling of the szerarios for future
 and historic data.
    3. The script `length-of-dry-season.sh` calculates the variable "*Lenght of dry season*" from the percipitation dataset.
@@ -45,12 +45,6 @@ and historic data.
    6. The script `get_limiting_var.r` determins the limiting variable per individual modal. the output is a multilayered tif with 0/1 values (limits / does not limit)
 
 
-## Conda
-
-run `conda activate consus` to run the r-code in this repo
-run `conda activate geopython` to run the bash files (gdal_* etc) in this repo
-
-(i couldn't create one single environment for some reason. gdal_calc.py is missing from the consus environment, all r stuff is missing from the geopython env)
 
 
 
@@ -59,13 +53,20 @@ run `conda activate geopython` to run the bash files (gdal_* etc) in this repo
 
 ### Modules & Conda
 
-
 ```
 # RHEL 8
 module load gcc/9.4.0-pe5.34 miniconda3/4.12.0 lsfm-init-miniconda/1.0.0
 
+# to run the r-code in this repo
+conda activate consus
 
+# to run the bash files (gdal_* etc) in this repo
+conda activate geopython
 ```
+
+(i couldn't create one single environment for some reason. gdal_calc.py is missing from the consus environment, all r stuff is missing from the geopython env)
+
+
 ### Copy the data from the HPC to my local machine
 
 Go to your *local* project folder (e.g. `/home/nils/ownCloud/Projekte/2023_Pfefferanbau/`) and run the following command:

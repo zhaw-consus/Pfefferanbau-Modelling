@@ -16,15 +16,10 @@ httpgd::hgd()
 data_raw_chelsa <- "/cfs/earth/scratch/iunr/shared/iunr-consus/data-raw/chelsa"
 
 chelsa_files <- list.files(data_raw_chelsa, "\\.tif$",full.names = TRUE)
-precipitation_bool <- str_detect(chelsa_files, "pr")
 
-chelsa_files_pr <- chelsa_files[precipitation_bool]
-chelsa_files_bio <- chelsa_files[!precipitation_bool]
-
-
-chelsa_df <- tibble(
-    filename = basename(chelsa_files_bio),
-    path = dirname(chelsa_files_bio),
+chelsa_df_all <- tibble(
+    filename = basename(chelsa_files),
+    path = dirname(chelsa_files),
 ) |>
     extract(
         filename, 
@@ -33,11 +28,19 @@ chelsa_df <- tibble(
         remove = FALSE
         )
 
+# We are only interested in the 2041-2070 (ssp126, ssp585) and historic data
+interested_future <- chelsa_df_all$period == "2041-2070" & chelsa_df_all$ssp %in% c("ssp126", "ssp585")
+interested_historic <- chelsa_df_all$period == "1981-2010"
 
-# quality check: do we have all szenario data?!
-chelsa_df |>
-    filter(period != "1981-2010") |>
-    # mutate(variable = ifelse(str_detect(variable, "bio"), "bio", variable)) |>
+chelsa_df_all <- chelsa_df_all |>
+    filter(interested_future | interested_historic)
+
+chelsa_df_bio <- chelsa_df_all |>
+    filter(str_detect(filename, "bio\\d{1,2}"))
+
+
+# visual quality check: do we have all szenario data?!
+chelsa_df_bio |>
     group_by(period, gcm, ssp, variable) |>
     count() |>
     ungroup() |>
@@ -47,8 +50,10 @@ chelsa_df |>
     geom_text(aes(label = n), position = position_stack(vjust = 0.5)) +
     facet_grid(period ~ gcm)
 
-chelsa_df |>
-    filter(period == "1981-2010") 
+
+
+
+chelsa_files_pr <- chelsa_files[str_detect(chelsa_files, "_pr_\\d{2}")]
 
 
 chelsa_df_pr <- tibble(
@@ -72,10 +77,9 @@ chelsa_df_pr <- tibble(
     arrange(gcm, ssp, period, month)
 
 
-# quality check: do we have all pr-szenario data?!
-# 2011-2040 usesm1-0-ll ssp126 is missing and cannot be found on the server
+
+# Visual quality check: do we have all pr-szenario data?!
 chelsa_df_pr |>
-    filter(period != "1981-2010") |>
     group_by(period, gcm, ssp, variable) |>
     count() |>
     ungroup() |>
@@ -85,12 +89,25 @@ chelsa_df_pr |>
     geom_text(aes(label = n), position = position_stack(vjust = 0.5)) +
     facet_grid(period ~ gcm)
 
-chelsa_df_pr |>
-    distinct(gcm, ssp, period)  |>
-    na.omit() |>
-    write_csv("data-csvs/chelsa_gcms_ssps_periods.cvs",col_names = FALSE)
-    
 
+# We are only interested in the 2041-2070 (ssp126, ssp585) and historic data
+interested_future_pr <- chelsa_df_pr$period == "2041-2070" & chelsa_df_pr$ssp %in% c("ssp126", "ssp585")
+interested_historic_pr <- chelsa_df_pr$period == "1981-2010"
+
+chelsa_df_pr <- chelsa_df_pr |>
+    filter(interested_future_pr | interested_historic_pr) 
+
+
+chelsa_gcms_ssps_periods <- chelsa_df_pr |>
+    distinct(gcm, ssp, period) 
+
+
+
+# This file is used in "length-of-dry-season.sh"
+write_csv(chelsa_gcms_ssps_periods, "data-csvs/chelsa_gcms_ssps_periods.cvs",col_names = FALSE)
+
+
+# This file is used in "length-of-dry-season.sh"
 write_csv(chelsa_df_pr, "data-csvs/chelsa_pr.csv")
 
 
@@ -104,7 +121,7 @@ non_temporal <- tribble(
     mutate(temporal = FALSE)
 
 
-chelsa_df2 <- chelsa_df |>
+chelsa_df_bio2 <- chelsa_df_bio |>
     group_by(gcm, ssp, period) |>
     transmute(variable, file = file.path(path,filename), temporal = TRUE) |>
     ungroup() |>
@@ -118,9 +135,6 @@ chelsa_df2 <- chelsa_df |>
 
 
 crop_characteristics <- read_csv("data-csvs/Cropdb.Input_Crop_Characteristics.csv")
-
-
-
 
 crop_characteristics <- crop_characteristics |>
 # see https://github.zhaw.ch/CONSUS/Pfefferanbau-Modelling/issues/3
@@ -199,8 +213,6 @@ crop_characteristics_transformed <- crop_characteristics_long |>
     left_join(scale_offset, by = "variable")  |> 
     mutate(across(ends_with("_Value"), list("adjusted" = \(x) (x-offset)/scale))) 
 
-99999
-999999
 crop_characteristics_transformed |>
     mutate(
         Bottom_Value = ifelse(Bottom_Value == -999999.0, -Inf, Bottom_Value),
@@ -245,17 +257,17 @@ crop_characteristics_nested2 <- crop_characteristics_nested |>
 ################################################################################
 
 characteristics_files <- crop_characteristics_nested2  |>
-    filter(Characteristic != "length of dry season") |>
-    left_join(chelsa_df2, by = "variable", multiple = "all") |>
+    filter(Characteristic != "length of dry season") |> 
+    left_join(chelsa_df_bio2, by = "variable", multiple = "all", relationship = "many-to-many") |>
     mutate(
         outname = paste(str_replace_all(str_remove(Characteristic, "\\."), " ", "-"), Characteristic_i, sep = "-")
     ) 
 
 
 
-
-
+# This files is used in "model-it.sh" and "get-raster-stats.sh"
 characteristics_files |>
     select(-temporal) |>
     # filter(variable == "bio12") |>
     write_csv("data-csvs/characteristics_files.csv")
+
