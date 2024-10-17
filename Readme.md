@@ -11,11 +11,10 @@ The code is written in `R` and `bash` (`gdal`) and was executed the [ZHAW LSFM H
 
 ## Project Pipeline
 
-The project pipeline consists of individual scripts that typically produce outputs which are used by other scripts. The following diagram shows the pipeline and the dependencies between the scripts. The scripts are numbered in the order they should be executed. 
+The project pipeline consists of individual scripts that typically produce outputs which are used by other scripts. The following diagram shows the pipeline and the dependencies between the scripts. The scripts are numbered in the order they should be executed (**click on the image for full size view**).
 
 [![](images/workflow.png)](https://raw.githubusercontent.com/zhaw-consus/Pfefferanbau-Modelling/main/images/workflow.svg)
 
-**Click on the image for full size view**
 
 
 ### Obtaining the data
