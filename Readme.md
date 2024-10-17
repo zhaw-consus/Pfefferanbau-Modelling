@@ -13,7 +13,7 @@ The code is written in `R` and `bash` (`gdal`) and was executed the [ZHAW LSFM H
 
 The project pipeline consists of individual scripts that typically produce outputs which are used by other scripts. The following diagram shows the pipeline and the dependencies between the scripts. The scripts are numbered in the order they should be executed. 
 
-![](images/workflow.svg)
+[![](images/workflow.png)](images/workflow.svg)
 
 
 
